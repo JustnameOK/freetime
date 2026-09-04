@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>记录游鱼</title>
+    <title>空闲游鱼</title>
     <style>
         /* ===== CSS 变量 & 重置 ===== */
         :root {
@@ -512,7 +512,7 @@
             color: var(--purple-dark);
         }
 
-        /* ===== 模态框（导入 + 批量） ===== */
+        /* ===== 模态框（导入 + 批量 + 导出） ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -568,6 +568,20 @@
         .modal-box .actions .btn {
             min-width: 80px;
             justify-content: center;
+        }
+
+        .modal-box input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color var(--transition);
+            margin-bottom: 16px;
+        }
+        .modal-box input[type="text"]:focus {
+            border-color: var(--primary);
         }
 
         /* 批量模态框专用样式 */
@@ -862,11 +876,11 @@
         <div class="header">
             <div class="header-left">
                 <h1>📅 空闲时间鱼</h1>
-                <span class="badge">今天你跑团了吗</span>
+                <span class="badge">多数据比对 · 批量操作</span>
             </div>
             <div class="header-actions">
                 <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 清除</button>
-                <button class="btn btn-primary btn-sm" onclick="exportData()">📤 导出</button>
+                <button class="btn btn-primary btn-sm" onclick="openExportModal()">📤 导出</button>
                 <button class="btn btn-green btn-sm" onclick="document.getElementById('fileInput').click()">📥 导入</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleImport(event)">
             </div>
@@ -941,6 +955,19 @@
             <p id="modalDesc">选择操作：</p>
             <div class="actions" id="modalActions">
                 <!-- 动态生成按钮 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 模态框：导出 ===== -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-box">
+            <h3>📤 导出数据</h3>
+            <p style="font-size:14px;color:var(--gray-600);margin-bottom:12px;">请输入文件名（.json 后缀自动添加）</p>
+            <input type="text" id="exportFileName" value="" placeholder="例如：我的空闲时间表" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:15px;outline:none;margin-bottom:16px;">
+            <div class="actions">
+                <button class="btn btn-outline" onclick="closeExportModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmExport()">确认导出</button>
             </div>
         </div>
     </div>
@@ -1070,8 +1097,8 @@
             updateStats();
             updateOverlapList();
             updateCompareBanner();
-            renderBatchSelects(); // 填充批量模态框的时间选择器
-            renderWeekdayCheckboxes(); // 填充星期复选框
+            renderBatchSelects();
+            renderWeekdayCheckboxes();
         }
 
         function renderHead() {
@@ -1112,7 +1139,6 @@
             }
             tbody.innerHTML = html;
 
-            // 事件绑定：点击格子切换状态（无选择模式）
             tbody.querySelectorAll('td:not(:first-child)').forEach(td => {
                 td.addEventListener('click', onCellClick);
             });
@@ -1152,7 +1178,6 @@
             container.innerHTML = html;
         }
 
-        // 获取选中的星期索引数组
         function getSelectedWeekdays() {
             const checkboxes = document.querySelectorAll('#weekdayCheckboxes input[type="checkbox"]');
             const selected = [];
@@ -1175,12 +1200,11 @@
             schedule[dayKey][slot] = !current;
             saveToStorage();
 
-            // 更新UI
             const isFree = schedule[dayKey][slot];
             td.className = isFree ? 'free' : 'busy';
             td.classList.remove('overlap');
             if (compareDataList.length > 0) {
-                render(); // 重新渲染保持一致性
+                render();
             } else {
                 updateStats();
             }
@@ -1211,9 +1235,40 @@
         }
 
         // ============================================================
-        //  导出
+        //  导出（新增自定义文件名）
         // ============================================================
-        function exportData() {
+        function openExportModal() {
+            // 生成默认文件名
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0,10);
+            const defaultName = `空闲时间表_${dateStr}`;
+            document.getElementById('exportFileName').value = defaultName;
+            document.getElementById('exportModal').classList.add('active');
+            // 自动聚焦输入框
+            setTimeout(() => document.getElementById('exportFileName').focus(), 100);
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('active');
+        }
+
+        function confirmExport() {
+            let filename = document.getElementById('exportFileName').value.trim();
+            if (!filename) {
+                // 若为空，使用默认
+                const now = new Date();
+                const dateStr = now.toISOString().slice(0,10);
+                filename = `空闲时间表_${dateStr}`;
+            }
+            // 确保后缀 .json
+            if (!filename.endsWith('.json')) {
+                filename += '.json';
+            }
+            doExport(filename);
+            closeExportModal();
+        }
+
+        function doExport(filename) {
             const data = {
                 version: '1.0',
                 exportedAt: new Date().toISOString(),
@@ -1226,13 +1281,20 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `空闲时间表_${new Date().toISOString().slice(0,10)}.json`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('✅ 数据导出成功', 'success');
+            showToast(`✅ 数据已导出为 “${filename}”`, 'success');
         }
+
+        // 点击外部关闭导出模态框
+        document.getElementById('exportModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeExportModal();
+            }
+        });
 
         // ============================================================
         //  导入 & 模态框（支持多份比对）
@@ -1461,7 +1523,6 @@
                 return;
             }
 
-            // 获取选中的星期
             const selectedDays = getSelectedWeekdays();
             if (selectedDays.length === 0) {
                 showToast('请至少选择一个星期', 'info');
@@ -1519,14 +1580,13 @@
         function openBatchModal() {
             document.getElementById('batchModal').classList.add('active');
             renderBatchSelects();
-            renderWeekdayCheckboxes(); // 确保复选框显示最新
+            renderWeekdayCheckboxes();
         }
 
         function closeBatchModal() {
             document.getElementById('batchModal').classList.remove('active');
         }
 
-        // 点击外部关闭批量模态框
         document.getElementById('batchModal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 closeBatchModal();
@@ -1576,6 +1636,9 @@
                 if (document.getElementById('batchModal').classList.contains('active')) {
                     closeBatchModal();
                 }
+                if (document.getElementById('exportModal').classList.contains('active')) {
+                    closeExportModal();
+                }
                 if (compareDataList.length > 0) {
                     exitCompareMode();
                     render();
@@ -1584,7 +1647,7 @@
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
-                exportData();
+                openExportModal();
             }
             if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
                 e.preventDefault();
@@ -1603,7 +1666,10 @@
         });
 
         // 暴露全局函数
-        window.exportData = exportData;
+        window.exportData = doExport; // 保留但建议使用 openExportModal
+        window.openExportModal = openExportModal;
+        window.closeExportModal = closeExportModal;
+        window.confirmExport = confirmExport;
         window.handleImport = handleImport;
         window.clearAll = clearAll;
         window.exitCompareMode = exitCompareMode;
@@ -1617,7 +1683,7 @@
         window.showToast = showToast;
 
         console.log('📅 空闲时间鱼 已加载');
-        console.log('💡 快捷键: Ctrl+E 导出, Ctrl+I 导入, ESC 关闭弹窗/退出比对');
+        console.log('💡 快捷键: Ctrl+E 导出(自定义文件名), Ctrl+I 导入, ESC 关闭弹窗/退出比对');
         console.log('🔘 点击“选择模式”打开批量操作弹窗，可指定星期');
     </script>
 
