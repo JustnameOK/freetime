@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>空闲游鱼</title>
+    <title>记录游鱼</title>
     <style>
         /* ===== CSS 变量 & 重置 ===== */
         :root {
@@ -512,7 +512,7 @@
             color: var(--purple-dark);
         }
 
-        /* ===== 模态框（导入 + 批量 + 导出） ===== */
+        /* ===== 模态框（导入 + 批量 + 导出 + 口令导入） ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -570,7 +570,8 @@
             justify-content: center;
         }
 
-        .modal-box input[type="text"] {
+        .modal-box input[type="text"],
+        .modal-box textarea {
             width: 100%;
             padding: 10px 12px;
             border: 1.5px solid var(--gray-300);
@@ -579,9 +580,43 @@
             outline: none;
             transition: border-color var(--transition);
             margin-bottom: 16px;
+            font-family: inherit;
         }
-        .modal-box input[type="text"]:focus {
+        .modal-box input[type="text"]:focus,
+        .modal-box textarea:focus {
             border-color: var(--primary);
+        }
+        .modal-box textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-box select {
+            padding: 6px 12px;
+            border: 1.5px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+        .modal-box select:focus {
+            border-color: var(--primary);
+        }
+
+        .code-display {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            word-break: break-all;
+            margin-bottom: 16px;
+            max-height: 120px;
+            overflow-y: auto;
+            user-select: all;
+            font-family: monospace;
         }
 
         /* 批量模态框专用样式 */
@@ -881,8 +916,9 @@
             <div class="header-actions">
                 <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 清除</button>
                 <button class="btn btn-primary btn-sm" onclick="openExportModal()">📤 导出</button>
-                <button class="btn btn-green btn-sm" onclick="document.getElementById('fileInput').click()">📥 导入</button>
+                <button class="btn btn-green btn-sm" onclick="document.getElementById('fileInput').click()">📥 导入文件</button>
                 <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleImport(event)">
+                <button class="btn btn-purple btn-sm" onclick="openImportCodeModal()">🔑 导入口令</button>
             </div>
         </div>
 
@@ -948,7 +984,7 @@
         </div>
     </div>
 
-    <!-- ===== 模态框：导入 ===== -->
+    <!-- ===== 模态框：导入文件 ===== -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-box">
             <h3 id="modalTitle">导入数据</h3>
@@ -963,11 +999,36 @@
     <div class="modal-overlay" id="exportModal">
         <div class="modal-box">
             <h3>📤 导出数据</h3>
-            <p style="font-size:14px;color:var(--gray-600);margin-bottom:12px;">请输入文件名（.json 后缀自动添加）</p>
-            <input type="text" id="exportFileName" value="" placeholder="例如：我的空闲时间表" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-300);border-radius:8px;font-size:15px;outline:none;margin-bottom:16px;">
+            <p style="font-size:14px;color:var(--gray-600);margin-bottom:12px;">选择导出方式</p>
+            <select id="exportType" style="margin-bottom:16px;">
+                <option value="file">导出为文件 (.json)</option>
+                <option value="code">导出为口令 (文本)</option>
+            </select>
+            <div id="exportFileSection">
+                <p style="font-size:14px;color:var(--gray-600);margin-bottom:4px;">文件名（自动添加 .json）</p>
+                <input type="text" id="exportFileName" value="" placeholder="例如：我的空闲时间表" style="margin-bottom:16px;">
+            </div>
+            <div id="exportCodeSection" style="display:none;">
+                <p style="font-size:14px;color:var(--gray-600);margin-bottom:4px;">复制下方口令，即可通过“导入口令”恢复</p>
+                <div class="code-display" id="exportCodeDisplay">（生成中...）</div>
+                <button class="btn btn-outline btn-sm" onclick="copyExportCode()" style="margin-bottom:16px;">📋 复制口令</button>
+            </div>
             <div class="actions">
                 <button class="btn btn-outline" onclick="closeExportModal()">取消</button>
-                <button class="btn btn-primary" onclick="confirmExport()">确认导出</button>
+                <button class="btn btn-primary" id="exportConfirmBtn" onclick="confirmExport()">确认导出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 模态框：导入口令 ===== -->
+    <div class="modal-overlay" id="importCodeModal">
+        <div class="modal-box">
+            <h3>🔑 导入口令</h3>
+            <p style="font-size:14px;color:var(--gray-600);margin-bottom:8px;">粘贴从“导出为口令”获得的内容</p>
+            <textarea id="importCodeInput" placeholder="请粘贴口令..."></textarea>
+            <div class="actions">
+                <button class="btn btn-outline" onclick="closeImportCodeModal()">取消</button>
+                <button class="btn btn-primary" onclick="confirmImportCode()">解析并导入</button>
             </div>
         </div>
     </div>
@@ -1033,7 +1094,7 @@
         const DAYS_EN = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const HOURS_START = 6; // 06:00
         const HOURS_END = 24; // 24:00
-        const SLOTS = (HOURS_END - HOURS_START) * 2; // 每30分钟一格 => 36
+        const SLOTS = (HOURS_END - HOURS_START) * 2;
 
         const TIME_LABELS = [];
         for (let i = 0; i < SLOTS; i++) {
@@ -1048,8 +1109,6 @@
         // ============================================================
         let schedule = {};
         let compareDataList = [];
-
-        // 模态框回调
         let modalResolve = null;
         let pendingImportData = null;
 
@@ -1188,7 +1247,7 @@
         }
 
         // ============================================================
-        //  交互：点击单元格（切换空闲/忙碌）
+        //  交互：点击单元格
         // ============================================================
         function onCellClick(e) {
             const td = e.currentTarget;
@@ -1211,7 +1270,7 @@
         }
 
         // ============================================================
-        //  重叠判断（基于所有比对数据）
+        //  重叠判断
         // ============================================================
         function isOverlapCell(dayIdx, slot) {
             if (compareDataList.length === 0) return false;
@@ -1235,16 +1294,29 @@
         }
 
         // ============================================================
-        //  导出（新增自定义文件名）
+        //  导出（文件 + 口令）
         // ============================================================
+        let exportCode = '';
+
         function openExportModal() {
-            // 生成默认文件名
             const now = new Date();
             const dateStr = now.toISOString().slice(0,10);
-            const defaultName = `空闲时间表_${dateStr}`;
-            document.getElementById('exportFileName').value = defaultName;
+            document.getElementById('exportFileName').value = `空闲时间表_${dateStr}`;
             document.getElementById('exportModal').classList.add('active');
-            // 自动聚焦输入框
+            // 切换导出类型事件
+            const typeSelect = document.getElementById('exportType');
+            typeSelect.onchange = function() {
+                const isCode = this.value === 'code';
+                document.getElementById('exportFileSection').style.display = isCode ? 'none' : 'block';
+                document.getElementById('exportCodeSection').style.display = isCode ? 'block' : 'none';
+                document.getElementById('exportConfirmBtn').textContent = isCode ? '生成口令' : '确认导出';
+                if (isCode) {
+                    generateExportCode();
+                }
+            };
+            // 默认文件
+            typeSelect.value = 'file';
+            typeSelect.onchange();
             setTimeout(() => document.getElementById('exportFileName').focus(), 100);
         }
 
@@ -1252,23 +1324,57 @@
             document.getElementById('exportModal').classList.remove('active');
         }
 
-        function confirmExport() {
-            let filename = document.getElementById('exportFileName').value.trim();
-            if (!filename) {
-                // 若为空，使用默认
-                const now = new Date();
-                const dateStr = now.toISOString().slice(0,10);
-                filename = `空闲时间表_${dateStr}`;
+        function generateExportCode() {
+            try {
+                const json = JSON.stringify(schedule);
+                exportCode = btoa(unescape(encodeURIComponent(json))); // 支持中文
+                document.getElementById('exportCodeDisplay').textContent = exportCode;
+            } catch (e) {
+                document.getElementById('exportCodeDisplay').textContent = '生成口令失败：' + e.message;
             }
-            // 确保后缀 .json
-            if (!filename.endsWith('.json')) {
-                filename += '.json';
-            }
-            doExport(filename);
-            closeExportModal();
         }
 
-        function doExport(filename) {
+        function copyExportCode() {
+            const text = document.getElementById('exportCodeDisplay').textContent;
+            if (!text || text.startsWith('生成')) {
+                showToast('没有可复制的口令', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 口令已复制到剪贴板', 'success');
+            }).catch(() => {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('✅ 口令已复制', 'success');
+            });
+        }
+
+        function confirmExport() {
+            const type = document.getElementById('exportType').value;
+            if (type === 'file') {
+                let filename = document.getElementById('exportFileName').value.trim();
+                if (!filename) {
+                    const now = new Date();
+                    const dateStr = now.toISOString().slice(0,10);
+                    filename = `空闲时间表_${dateStr}`;
+                }
+                if (!filename.endsWith('.json')) filename += '.json';
+                doExportFile(filename);
+                closeExportModal();
+            } else { // code
+                if (!exportCode) generateExportCode();
+                // 直接复制口令并关闭
+                copyExportCode();
+                closeExportModal();
+            }
+        }
+
+        function doExportFile(filename) {
             const data = {
                 version: '1.0',
                 exportedAt: new Date().toISOString(),
@@ -1291,13 +1397,57 @@
 
         // 点击外部关闭导出模态框
         document.getElementById('exportModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeExportModal();
-            }
+            if (e.target === e.currentTarget) closeExportModal();
         });
 
         // ============================================================
-        //  导入 & 模态框（支持多份比对）
+        //  导入口令
+        // ============================================================
+        function openImportCodeModal() {
+            document.getElementById('importCodeInput').value = '';
+            document.getElementById('importCodeModal').classList.add('active');
+            setTimeout(() => document.getElementById('importCodeInput').focus(), 100);
+        }
+
+        function closeImportCodeModal() {
+            document.getElementById('importCodeModal').classList.remove('active');
+        }
+
+        function confirmImportCode() {
+            const code = document.getElementById('importCodeInput').value.trim();
+            if (!code) {
+                showToast('请输入口令', 'info');
+                return;
+            }
+            let parsed;
+            try {
+                const json = decodeURIComponent(escape(atob(code)));
+                parsed = JSON.parse(json);
+            } catch (e) {
+                showToast('❌ 口令无效，请检查是否正确', 'error');
+                return;
+            }
+            // 验证结构
+            let valid = true;
+            DAYS_EN.forEach(d => {
+                if (!Array.isArray(parsed[d]) || parsed[d].length !== SLOTS) valid = false;
+            });
+            if (!valid) {
+                showToast('❌ 口令数据格式无效', 'error');
+                return;
+            }
+            // 关闭口令模态框，弹出导入选择（替换/比对）
+            closeImportCodeModal();
+            pendingImportData = parsed;
+            showModalForImport();
+        }
+
+        document.getElementById('importCodeModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeImportCodeModal();
+        });
+
+        // ============================================================
+        //  导入文件 & 导入数据通用处理
         // ============================================================
         function handleImport(event) {
             const file = event.target.files[0];
@@ -1311,14 +1461,11 @@
                     }
                     let valid = true;
                     DAYS_EN.forEach(d => {
-                        if (!Array.isArray(data.schedule[d]) || data.schedule[d].length !== SLOTS) {
-                            valid = false;
-                        }
+                        if (!Array.isArray(data.schedule[d]) || data.schedule[d].length !== SLOTS) valid = false;
                     });
                     if (!valid) {
                         throw new Error(`数据格式无效：需要包含 ${DAYS_EN.join(', ')} 且每个长度为 ${SLOTS}`);
                     }
-
                     pendingImportData = data.schedule;
                     showModalForImport();
                 } catch (err) {
@@ -1363,7 +1510,6 @@
                 showToast('没有待导入的数据', 'error');
                 return;
             }
-
             if (action === 'replace') {
                 schedule = JSON.parse(JSON.stringify(pendingImportData));
                 compareDataList = [];
@@ -1385,9 +1531,7 @@
         }
 
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeModal();
-            }
+            if (e.target === e.currentTarget) closeModal();
         });
 
         // ============================================================
@@ -1429,7 +1573,7 @@
         }
 
         // ============================================================
-        //  重叠列表（实时计算）
+        //  重叠列表
         // ============================================================
         function updateOverlapList() {
             const wrap = document.getElementById('overlapListWrap');
@@ -1494,7 +1638,7 @@
         }
 
         // ============================================================
-        //  批量操作：时间范围标记（支持选择星期）
+        //  批量操作：时间范围标记
         // ============================================================
         function getSlotFromTime(hour, minute) {
             if (hour < HOURS_START || hour > HOURS_END) return -1;
@@ -1551,7 +1695,7 @@
         }
 
         // ============================================================
-        //  批量操作：全选标记（始终作用于所有天）
+        //  批量操作：全选标记
         // ============================================================
         function batchMarkAll(isFree) {
             let count = 0;
@@ -1588,9 +1732,7 @@
         }
 
         document.getElementById('batchModal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) {
-                closeBatchModal();
-            }
+            if (e.target === e.currentTarget) closeBatchModal();
         });
 
         // ============================================================
@@ -1609,7 +1751,7 @@
         }
 
         // ============================================================
-        //  Toast 通知
+        //  Toast
         // ============================================================
         let toastTimer = null;
 
@@ -1630,15 +1772,10 @@
         // ============================================================
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                if (document.getElementById('modalOverlay').classList.contains('active')) {
-                    closeModal();
-                }
-                if (document.getElementById('batchModal').classList.contains('active')) {
-                    closeBatchModal();
-                }
-                if (document.getElementById('exportModal').classList.contains('active')) {
-                    closeExportModal();
-                }
+                if (document.getElementById('modalOverlay').classList.contains('active')) closeModal();
+                if (document.getElementById('batchModal').classList.contains('active')) closeBatchModal();
+                if (document.getElementById('exportModal').classList.contains('active')) closeExportModal();
+                if (document.getElementById('importCodeModal').classList.contains('active')) closeImportCodeModal();
                 if (compareDataList.length > 0) {
                     exitCompareMode();
                     render();
@@ -1666,10 +1803,13 @@
         });
 
         // 暴露全局函数
-        window.exportData = doExport; // 保留但建议使用 openExportModal
         window.openExportModal = openExportModal;
         window.closeExportModal = closeExportModal;
         window.confirmExport = confirmExport;
+        window.copyExportCode = copyExportCode;
+        window.openImportCodeModal = openImportCodeModal;
+        window.closeImportCodeModal = closeImportCodeModal;
+        window.confirmImportCode = confirmImportCode;
         window.handleImport = handleImport;
         window.clearAll = clearAll;
         window.exitCompareMode = exitCompareMode;
@@ -1683,8 +1823,8 @@
         window.showToast = showToast;
 
         console.log('📅 空闲时间鱼 已加载');
-        console.log('💡 快捷键: Ctrl+E 导出(自定义文件名), Ctrl+I 导入, ESC 关闭弹窗/退出比对');
-        console.log('🔘 点击“选择模式”打开批量操作弹窗，可指定星期');
+        console.log('💡 快捷键: Ctrl+E 导出(支持口令), Ctrl+I 导入文件, ESC 关闭弹窗/退出比对');
+        console.log('🔑 支持导出/导入口令（Base64编码）');
     </script>
 
 </body>
