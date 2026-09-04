@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>空闲游鱼</title>
+    <title>记录游鱼</title>
     <style>
         /* ===== CSS 变量 & 重置 ===== */
         :root {
@@ -16,6 +16,8 @@
             --purple: #8B5CF6;
             --purple-light: #EDE9FE;
             --purple-dark: #7C3AED;
+            --orange: #F59E0B;
+            --orange-light: #FEF3C7;
             --gray-50: #F9FAFB;
             --gray-100: #F3F4F6;
             --gray-200: #E5E7EB;
@@ -50,7 +52,6 @@
             align-items: flex-start;
         }
 
-        /* ===== 容器 ===== */
         .app-container {
             max-width: 1100px;
             width: 100%;
@@ -67,7 +68,7 @@
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 16px;
             gap: 12px;
         }
 
@@ -120,7 +121,6 @@
             background: var(--gray-200);
             transform: translateY(-1px);
         }
-
         .btn:active {
             transform: translateY(0);
         }
@@ -150,6 +150,15 @@
         .btn-purple:hover {
             background: var(--purple-dark);
             box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+        }
+
+        .btn-orange {
+            background: var(--orange);
+            color: white;
+        }
+        .btn-orange:hover {
+            background: #D97706;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
         }
 
         .btn-danger {
@@ -189,7 +198,7 @@
             border: 1.5px solid var(--purple);
             border-radius: 10px;
             padding: 12px 20px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -220,6 +229,31 @@
             color: var(--purple-dark);
         }
 
+        /* ===== 批量操作工具栏（精简） ===== */
+        .batch-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 12px;
+            background: var(--gray-50);
+            padding: 10px 16px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .batch-toolbar .label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-right: 4px;
+        }
+
+        .batch-toolbar .btn {
+            font-size: 13px;
+            padding: 6px 14px;
+        }
+
         /* ===== 表格容器 ===== */
         .table-wrap {
             overflow-x: auto;
@@ -243,7 +277,6 @@
             vertical-align: middle;
         }
 
-        /* ===== 表头 ===== */
         .schedule-table thead th {
             background: var(--gray-50);
             padding: 10px 4px;
@@ -266,11 +299,6 @@
 
         .schedule-table thead th.weekday {
             cursor: default;
-            transition: background var(--transition);
-        }
-
-        .schedule-table thead th.weekday:hover {
-            background: var(--gray-200);
         }
 
         .schedule-table thead th .day-label {
@@ -282,14 +310,13 @@
             font-size: 12px;
         }
 
-        /* ===== 表体 ===== */
         .schedule-table tbody td {
             padding: 0;
             height: var(--cell-size);
             min-height: var(--cell-size);
             max-height: var(--cell-size);
             background: white;
-            transition: background var(--transition), transform 0.1s;
+            transition: background var(--transition), transform 0.1s, box-shadow 0.1s;
             cursor: pointer;
             position: relative;
         }
@@ -342,7 +369,7 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
-        /* ===== 重叠状态 ===== */
+        /* ===== 重叠状态（多份数据共同空闲） ===== */
         .schedule-table tbody td.overlap {
             background: var(--purple-light) !important;
             border-color: var(--purple) !important;
@@ -485,7 +512,7 @@
             color: var(--purple-dark);
         }
 
-        /* ===== 模态框 ===== */
+        /* ===== 模态框（导入 + 批量） ===== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -509,10 +536,12 @@
             background: white;
             border-radius: 16px;
             padding: 32px 36px;
-            max-width: 480px;
+            max-width: 540px;
             width: 90%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
             animation: slideUp 0.25s ease;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal-box h3 {
@@ -539,6 +568,73 @@
         .modal-box .actions .btn {
             min-width: 80px;
             justify-content: center;
+        }
+
+        /* 批量模态框专用样式 */
+        .batch-section {
+            margin: 16px 0 8px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        .batch-section:last-child {
+            border-bottom: none;
+        }
+        .batch-section .section-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--gray-700);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .batch-section .time-select {
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+        }
+        .batch-section .time-select:focus {
+            border-color: var(--primary);
+        }
+        .batch-section .range-label {
+            font-size: 13px;
+            color: var(--gray-600);
+            margin: 0 4px;
+        }
+        .batch-section .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .batch-section .btn-group .btn {
+            flex: 1 0 auto;
+        }
+
+        /* 星期复选框 */
+        .weekday-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+            margin-top: 8px;
+        }
+        .weekday-checkboxes label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+        .weekday-checkboxes input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            cursor: pointer;
         }
 
         @keyframes fadeIn {
@@ -680,6 +776,17 @@
                 font-size: 12px;
                 padding: 3px 10px;
             }
+            .batch-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .batch-section .btn-group .btn {
+                flex: 1 1 100%;
+            }
+            .weekday-checkboxes label {
+                font-size: 13px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -709,6 +816,13 @@
             .btn {
                 font-size: 12px;
                 padding: 5px 10px;
+            }
+            .time-select {
+                font-size: 11px;
+                padding: 2px 4px;
+            }
+            .weekday-checkboxes label {
+                font-size: 12px;
             }
         }
 
@@ -748,7 +862,7 @@
         <div class="header">
             <div class="header-left">
                 <h1>📅 空闲时间鱼</h1>
-                <span class="badge">周一到周日</span>
+                <span class="badge">今天你跑团了吗</span>
             </div>
             <div class="header-actions">
                 <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 清除</button>
@@ -762,12 +876,19 @@
         <div class="compare-banner" id="compareBanner">
             <div class="left">
                 <span class="icon">🔍</span>
-                <span>比对模式已开启</span>
-                <span class="stats" id="compareStats">找到 <strong>0</strong> 个重叠时间段</span>
+                <span>比对模式（<span id="compareCount">0</span> 份数据）</span>
+                <span class="stats" id="compareStats">共同空闲 <strong>0</strong> 个时段</span>
             </div>
             <div>
-                <button class="btn btn-purple btn-sm" onclick="exitCompareMode()">✕ 退出比对</button>
+                <button class="btn btn-danger btn-sm" onclick="clearCompareQueue()">🗑 清空队列</button>
+                <button class="btn btn-outline btn-sm" onclick="exitCompareMode()">✕ 退出比对</button>
             </div>
+        </div>
+
+        <!-- 批量操作工具栏（精简） -->
+        <div class="batch-toolbar" id="batchToolbar">
+            <span class="label">📌 批量操作：</span>
+            <button class="btn btn-orange btn-sm" onclick="openBatchModal()">🔘 选择模式</button>
         </div>
 
         <!-- 表格 -->
@@ -794,7 +915,7 @@
                     <span class="dot busy-dot"></span> 忙碌
                 </span>
                 <span class="legend-item">
-                    <span class="dot overlap-dot"></span> 重叠空闲
+                    <span class="dot overlap-dot"></span> 共同空闲（比对）
                 </span>
                 <span style="color:var(--gray-400);font-size:12px;">点击格子切换</span>
             </div>
@@ -806,22 +927,70 @@
         <!-- 重叠列表 -->
         <div class="overlap-list-wrap" id="overlapListWrap">
             <div class="title">
-                📋 重叠空闲时间段
+                📋 共同空闲时间段（所有数据交集）
                 <span class="count" id="overlapCount">0</span>
             </div>
             <div class="overlap-list" id="overlapList"></div>
         </div>
     </div>
 
-    <!-- ===== 模态框 ===== -->
+    <!-- ===== 模态框：导入 ===== -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-box">
             <h3 id="modalTitle">导入数据</h3>
-            <p id="modalDesc">是否与当前数据比对，找出重叠的空闲时间段？</p>
-            <div class="actions">
-                <button class="btn btn-outline" id="modalCancel" onclick="closeModal()">取消</button>
-                <button class="btn btn-primary" id="modalReplace" onclick="modalConfirm('replace')">直接替换</button>
-                <button class="btn btn-purple" id="modalCompare" onclick="modalConfirm('compare')">比对合并</button>
+            <p id="modalDesc">选择操作：</p>
+            <div class="actions" id="modalActions">
+                <!-- 动态生成按钮 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 模态框：批量操作（选择模式） ===== -->
+    <div class="modal-overlay" id="batchModal">
+        <div class="modal-box">
+            <h3>🔘 批量操作</h3>
+            <p style="font-size:14px;color:var(--gray-500);margin-bottom:16px;">通过时间范围或全选快速标记空闲/忙碌</p>
+
+            <!-- 时间范围部分 -->
+            <div class="batch-section">
+                <div class="section-title">⏰ 时间范围</div>
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
+                    <select id="batchStartHour" class="time-select"></select>
+                    <select id="batchStartMinute" class="time-select">
+                        <option value="0">:00</option>
+                        <option value="30">:30</option>
+                    </select>
+                    <span class="range-label">至</span>
+                    <select id="batchEndHour" class="time-select"></select>
+                    <select id="batchEndMinute" class="time-select">
+                        <option value="0">:00</option>
+                        <option value="30">:30</option>
+                    </select>
+                </div>
+                <!-- 选择星期几 -->
+                <div style="margin-top:10px;">
+                    <span style="font-size:13px;color:var(--gray-600);font-weight:500;">应用至星期：</span>
+                    <div class="weekday-checkboxes" id="weekdayCheckboxes">
+                        <!-- 由 JS 动态生成 -->
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-green" onclick="batchMarkTimeRange(true)">✅ 标记空闲（范围）</button>
+                    <button class="btn btn-danger" onclick="batchMarkTimeRange(false)">⛔ 标记忙碌（范围）</button>
+                </div>
+            </div>
+
+            <!-- 全选部分 -->
+            <div class="batch-section">
+                <div class="section-title">📌 全选</div>
+                <div class="btn-group">
+                    <button class="btn btn-green" onclick="batchMarkAll(true)">✅ 全部标记空闲</button>
+                    <button class="btn btn-danger" onclick="batchMarkAll(false)">⛔ 全部标记忙碌</button>
+                </div>
+            </div>
+
+            <div class="actions" style="margin-top:20px;padding-top:12px;border-top:1px solid var(--gray-200);">
+                <button class="btn btn-outline" onclick="closeBatchModal()">关闭</button>
             </div>
         </div>
     </div>
@@ -839,7 +1008,6 @@
         const HOURS_END = 24; // 24:00
         const SLOTS = (HOURS_END - HOURS_START) * 2; // 每30分钟一格 => 36
 
-        // 生成时间标签
         const TIME_LABELS = [];
         for (let i = 0; i < SLOTS; i++) {
             const h = HOURS_START + Math.floor(i / 2);
@@ -851,13 +1019,12 @@
         // ============================================================
         //  状态
         // ============================================================
-        let schedule = {}; // { monday: [bool, ...], ... }
-        let compareData = null; // 导入的原始数据（用于比对）
-        let overlapCells = new Set(); // 存储重叠的格子 key: "dayIdx-slotIdx"
-        let isCompareMode = false;
+        let schedule = {};
+        let compareDataList = [];
 
         // 模态框回调
         let modalResolve = null;
+        let pendingImportData = null;
 
         // ============================================================
         //  初始化
@@ -869,13 +1036,11 @@
             return data;
         }
 
-        // 从 localStorage 恢复或新建
         function loadFromStorage() {
             try {
                 const raw = localStorage.getItem('freeSchedule');
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    // 验证结构
                     let valid = true;
                     DAYS_EN.forEach(d => {
                         if (!Array.isArray(parsed[d]) || parsed[d].length !== SLOTS) valid = false;
@@ -905,6 +1070,8 @@
             updateStats();
             updateOverlapList();
             updateCompareBanner();
+            renderBatchSelects(); // 填充批量模态框的时间选择器
+            renderWeekdayCheckboxes(); // 填充星期复选框
         }
 
         function renderHead() {
@@ -935,9 +1102,9 @@
                 for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
                     const dayKey = DAYS_EN[dayIdx];
                     const isFree = schedule[dayKey]?.[slot] || false;
-                    const isOverlap = overlapCells.has(`${dayIdx}-${slot}`);
+                    const isOverlap = isOverlapCell(dayIdx, slot);
                     let cls = isFree ? 'free' : 'busy';
-                    if (isOverlap && isCompareMode) cls += ' overlap';
+                    if (isOverlap && compareDataList.length > 0) cls += ' overlap';
                     html += `<td class="${cls}" data-day="${dayIdx}" data-slot="${slot}"></td>`;
                 }
 
@@ -945,39 +1112,91 @@
             }
             tbody.innerHTML = html;
 
-            // 事件绑定（委托）
+            // 事件绑定：点击格子切换状态（无选择模式）
             tbody.querySelectorAll('td:not(:first-child)').forEach(td => {
                 td.addEventListener('click', onCellClick);
             });
         }
 
         // ============================================================
-        //  交互
+        //  时间选择器渲染（批量模态框）
+        // ============================================================
+        function renderBatchSelects() {
+            const startHourSel = document.getElementById('batchStartHour');
+            const endHourSel = document.getElementById('batchEndHour');
+            let opts = '';
+            for (let h = HOURS_START; h <= HOURS_END; h++) {
+                const label = String(h).padStart(2, '0');
+                opts += `<option value="${h}">${label}</option>`;
+            }
+            startHourSel.innerHTML = opts;
+            endHourSel.innerHTML = opts;
+            startHourSel.value = HOURS_START;
+            startHourSel.nextElementSibling.value = '0';
+            endHourSel.value = HOURS_END;
+            endHourSel.nextElementSibling.value = '0';
+        }
+
+        // ============================================================
+        //  星期复选框渲染（批量模态框）
+        // ============================================================
+        function renderWeekdayCheckboxes() {
+            const container = document.getElementById('weekdayCheckboxes');
+            let html = '';
+            DAYS.forEach((day, idx) => {
+                html += `<label>
+                            <input type="checkbox" value="${idx}" checked>
+                            ${day}
+                        </label>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // 获取选中的星期索引数组
+        function getSelectedWeekdays() {
+            const checkboxes = document.querySelectorAll('#weekdayCheckboxes input[type="checkbox"]');
+            const selected = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) selected.push(parseInt(cb.value));
+            });
+            return selected;
+        }
+
+        // ============================================================
+        //  交互：点击单元格（切换空闲/忙碌）
         // ============================================================
         function onCellClick(e) {
             const td = e.currentTarget;
             const dayIdx = parseInt(td.dataset.day);
             const slot = parseInt(td.dataset.slot);
+
             const dayKey = DAYS_EN[dayIdx];
-
-            // 如果在比对模式下，不允许修改（保持数据清晰）
-            if (isCompareMode) {
-                showToast('比对模式下不能修改数据，请先退出比对', 'info');
-                return;
-            }
-
-            // 切换状态
             const current = schedule[dayKey][slot];
             schedule[dayKey][slot] = !current;
             saveToStorage();
 
-            // 更新 UI
+            // 更新UI
             const isFree = schedule[dayKey][slot];
             td.className = isFree ? 'free' : 'busy';
-            // 移除可能的 overlap 类
             td.classList.remove('overlap');
+            if (compareDataList.length > 0) {
+                render(); // 重新渲染保持一致性
+            } else {
+                updateStats();
+            }
+        }
 
-            updateStats();
+        // ============================================================
+        //  重叠判断（基于所有比对数据）
+        // ============================================================
+        function isOverlapCell(dayIdx, slot) {
+            if (compareDataList.length === 0) return false;
+            const dayKey = DAYS_EN[dayIdx];
+            if (!schedule[dayKey][slot]) return false;
+            for (const data of compareDataList) {
+                if (!data[dayKey][slot]) return false;
+            }
+            return true;
         }
 
         // ============================================================
@@ -1016,10 +1235,8 @@
         }
 
         // ============================================================
-        //  导入
+        //  导入 & 模态框（支持多份比对）
         // ============================================================
-        let pendingImportData = null;
-
         function handleImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1027,7 +1244,6 @@
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    // 验证
                     if (!data.schedule || typeof data.schedule !== 'object') {
                         throw new Error('无效的数据格式：缺少 schedule 字段');
                     }
@@ -1042,43 +1258,41 @@
                     }
 
                     pendingImportData = data.schedule;
-                    // 显示模态框
-                    showModal(
-                        '📥 导入数据',
-                        '检测到有效的数据文件。请选择操作：',
-                        '直接替换',
-                        '比对合并'
-                    );
+                    showModalForImport();
                 } catch (err) {
                     showToast('❌ 导入失败: ' + err.message, 'error');
                 }
             };
             reader.readAsText(file);
-            // 重置 input，允许重复选择同一文件
             event.target.value = '';
         }
 
-        // ============================================================
-        //  模态框
-        // ============================================================
-        function showModal(title, desc, replaceLabel, compareLabel) {
+        function showModalForImport() {
+            const hasCompare = compareDataList.length > 0;
+            const title = '📥 导入数据';
+            const desc = hasCompare ?
+                '当前已有 ' + compareDataList.length + ' 份比对数据。请选择操作：' :
+                '导入数据，可选择替换当前数据或加入比对队列。';
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalDesc').textContent = desc;
-            document.getElementById('modalReplace').textContent = replaceLabel || '直接替换';
-            document.getElementById('modalCompare').textContent = compareLabel || '比对合并';
+            const actions = document.getElementById('modalActions');
+            let html = '';
+            if (hasCompare) {
+                html += `<button class="btn btn-outline" onclick="modalConfirm('replace')">替换当前数据</button>`;
+                html += `<button class="btn btn-purple" onclick="modalConfirm('addCompare')">加入比对队列</button>`;
+            } else {
+                html += `<button class="btn btn-primary" onclick="modalConfirm('replace')">替换当前数据</button>`;
+                html += `<button class="btn btn-purple" onclick="modalConfirm('addCompare')">加入比对队列</button>`;
+            }
+            html += `<button class="btn btn-outline" onclick="closeModal()">取消</button>`;
+            actions.innerHTML = html;
             document.getElementById('modalOverlay').classList.add('active');
-            return new Promise((resolve) => {
-                modalResolve = resolve;
-            });
         }
 
         function closeModal() {
             document.getElementById('modalOverlay').classList.remove('active');
-            if (modalResolve) {
-                modalResolve(null);
-                modalResolve = null;
-            }
             pendingImportData = null;
+            modalResolve = null;
         }
 
         function modalConfirm(action) {
@@ -1087,16 +1301,19 @@
                 showToast('没有待导入的数据', 'error');
                 return;
             }
+
             if (action === 'replace') {
-                // 直接替换
                 schedule = JSON.parse(JSON.stringify(pendingImportData));
+                compareDataList = [];
                 exitCompareMode();
                 saveToStorage();
                 render();
-                showToast('✅ 数据已替换', 'success');
-            } else if (action === 'compare') {
-                // 比对合并
-                performCompare(pendingImportData);
+                showToast('✅ 数据已替换，比对队列已清空', 'success');
+            } else if (action === 'addCompare') {
+                compareDataList.push(JSON.parse(JSON.stringify(pendingImportData)));
+                saveToStorage();
+                render();
+                showToast(`✅ 已加入比对队列（共 ${compareDataList.length} 份）`, 'success');
             }
             pendingImportData = null;
             if (modalResolve) {
@@ -1105,7 +1322,6 @@
             }
         }
 
-        // 点击模态框外部关闭（点击背景）
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 closeModal();
@@ -1113,105 +1329,81 @@
         });
 
         // ============================================================
-        //  比对逻辑
+        //  比对模式控制
         // ============================================================
-        function performCompare(importedData) {
-            // 清空旧的重叠数据
-            overlapCells.clear();
-
-            // 遍历所有格子
-            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
-                const dayKey = DAYS_EN[dayIdx];
-                const current = schedule[dayKey];
-                const imported = importedData[dayKey];
-                for (let slot = 0; slot < SLOTS; slot++) {
-                    if (current[slot] && imported[slot]) {
-                        overlapCells.add(`${dayIdx}-${slot}`);
-                    }
-                }
-            }
-
-            if (overlapCells.size === 0) {
-                showToast('💡 两份数据没有重叠的空闲时间段', 'info');
-                // 仍然进入比对模式，但显示空列表
-            } else {
-                showToast(`🔍 找到 ${overlapCells.size} 个重叠时间段`, 'success');
-            }
-
-            // 进入比对模式
-            isCompareMode = true;
-            compareData = importedData;
-            render();
-            // 高亮重叠
-            highlightOverlaps();
-            updateOverlapList();
-            updateCompareBanner();
-        }
-
-        function highlightOverlaps() {
-            // 在已有渲染基础上，给重叠格子添加类
-            const tbody = document.getElementById('tableBody');
-            tbody.querySelectorAll('td:not(:first-child)').forEach(td => {
-                const dayIdx = parseInt(td.dataset.day);
-                const slot = parseInt(td.dataset.slot);
-                if (overlapCells.has(`${dayIdx}-${slot}`)) {
-                    td.classList.add('overlap');
-                } else {
-                    td.classList.remove('overlap');
-                }
-            });
-        }
-
-        function exitCompareMode() {
-            isCompareMode = false;
-            compareData = null;
-            overlapCells.clear();
-            document.getElementById('compareBanner').classList.remove('active');
-            document.getElementById('overlapListWrap').classList.remove('active');
-            // 移除所有 overlap 类
-            document.querySelectorAll('#tableBody td.overlap').forEach(td => {
-                td.classList.remove('overlap');
-            });
-            // 更新统计
-            updateStats();
-        }
-
         function updateCompareBanner() {
             const banner = document.getElementById('compareBanner');
-            if (isCompareMode) {
+            if (compareDataList.length > 0) {
                 banner.classList.add('active');
+                document.getElementById('compareCount').textContent = compareDataList.length;
+                let overlapCount = 0;
+                for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                    for (let slot = 0; slot < SLOTS; slot++) {
+                        if (isOverlapCell(dayIdx, slot)) overlapCount++;
+                    }
+                }
                 document.getElementById('compareStats').innerHTML =
-                    `找到 <strong>${overlapCells.size}</strong> 个重叠时间段`;
+                    `共同空闲 <strong>${overlapCount}</strong> 个时段`;
             } else {
                 banner.classList.remove('active');
             }
         }
 
+        function exitCompareMode() {
+            compareDataList = [];
+            render();
+            showToast('已退出比对模式', 'info');
+        }
+
+        function clearCompareQueue() {
+            if (compareDataList.length === 0) {
+                showToast('比对队列已为空', 'info');
+                return;
+            }
+            compareDataList = [];
+            exitCompareMode();
+            render();
+            showToast('已清空比对队列', 'info');
+        }
+
+        // ============================================================
+        //  重叠列表（实时计算）
+        // ============================================================
         function updateOverlapList() {
             const wrap = document.getElementById('overlapListWrap');
             const list = document.getElementById('overlapList');
             const countEl = document.getElementById('overlapCount');
 
-            if (!isCompareMode || overlapCells.size === 0) {
+            if (compareDataList.length === 0) {
+                wrap.classList.remove('active');
+                return;
+            }
+
+            const overlapKeys = [];
+            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                for (let slot = 0; slot < SLOTS; slot++) {
+                    if (isOverlapCell(dayIdx, slot)) {
+                        overlapKeys.push({ dayIdx, slot });
+                    }
+                }
+            }
+
+            if (overlapKeys.length === 0) {
                 wrap.classList.remove('active');
                 return;
             }
 
             wrap.classList.add('active');
-            countEl.textContent = overlapCells.size;
+            countEl.textContent = overlapKeys.length;
 
-            // 构建时间段列表
             const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-            // 按天分组
             const groups = {};
-            overlapCells.forEach(key => {
-                const [dayIdx, slot] = key.split('-').map(Number);
+            overlapKeys.forEach(({ dayIdx, slot }) => {
                 const day = dayNames[dayIdx];
                 if (!groups[day]) groups[day] = [];
                 groups[day].push(slot);
             });
 
-            // 对每天的时间段进行合并（连续的格子合并为一个时间段）
             let html = '';
             for (const [day, slots] of Object.entries(groups)) {
                 slots.sort((a, b) => a - b);
@@ -1236,14 +1428,116 @@
                 });
             }
 
-            list.innerHTML = html || '<span style="color:var(--gray-400);font-size:13px;">无重叠时间段</span>';
+            list.innerHTML = html || '<span style="color:var(--gray-400);font-size:13px;">无共同空闲时段</span>';
         }
+
+        // ============================================================
+        //  批量操作：时间范围标记（支持选择星期）
+        // ============================================================
+        function getSlotFromTime(hour, minute) {
+            if (hour < HOURS_START || hour > HOURS_END) return -1;
+            if (hour === HOURS_END && minute > 0) return -1;
+            if (minute !== 0 && minute !== 30) return -1;
+            const slot = (hour - HOURS_START) * 2 + (minute / 30);
+            if (slot < 0 || slot > SLOTS) return -1;
+            return slot;
+        }
+
+        function batchMarkTimeRange(isFree) {
+            const startHour = parseInt(document.getElementById('batchStartHour').value);
+            const startMinute = parseInt(document.getElementById('batchStartMinute').value);
+            const endHour = parseInt(document.getElementById('batchEndHour').value);
+            const endMinute = parseInt(document.getElementById('batchEndMinute').value);
+
+            const startSlot = getSlotFromTime(startHour, startMinute);
+            const endSlot = getSlotFromTime(endHour, endMinute);
+
+            if (startSlot === -1 || endSlot === -1) {
+                showToast('⛔ 时间范围无效，请选择 6:00 到 24:00 之间', 'error');
+                return;
+            }
+            if (startSlot >= endSlot) {
+                showToast('⛔ 起始时间必须早于结束时间', 'error');
+                return;
+            }
+
+            // 获取选中的星期
+            const selectedDays = getSelectedWeekdays();
+            if (selectedDays.length === 0) {
+                showToast('请至少选择一个星期', 'info');
+                return;
+            }
+
+            let count = 0;
+            for (const dayIdx of selectedDays) {
+                const dayKey = DAYS_EN[dayIdx];
+                for (let slot = startSlot; slot < endSlot; slot++) {
+                    if (schedule[dayKey][slot] !== isFree) {
+                        schedule[dayKey][slot] = isFree;
+                        count++;
+                    }
+                }
+            }
+
+            if (count === 0) {
+                showToast('所选时间范围内所有格子已是目标状态', 'info');
+            } else {
+                saveToStorage();
+                render();
+                showToast(`✅ 已${isFree ? '标记空闲' : '标记忙碌'} ${count} 个格子（时间范围）`, 'success');
+                closeBatchModal();
+            }
+        }
+
+        // ============================================================
+        //  批量操作：全选标记（始终作用于所有天）
+        // ============================================================
+        function batchMarkAll(isFree) {
+            let count = 0;
+            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                const dayKey = DAYS_EN[dayIdx];
+                for (let slot = 0; slot < SLOTS; slot++) {
+                    if (schedule[dayKey][slot] !== isFree) {
+                        schedule[dayKey][slot] = isFree;
+                        count++;
+                    }
+                }
+            }
+            if (count === 0) {
+                showToast('所有格子已是目标状态', 'info');
+            } else {
+                saveToStorage();
+                render();
+                showToast(`✅ 已${isFree ? '标记空闲' : '标记忙碌'} ${count} 个格子（全选）`, 'success');
+                closeBatchModal();
+            }
+        }
+
+        // ============================================================
+        //  打开/关闭批量模态框
+        // ============================================================
+        function openBatchModal() {
+            document.getElementById('batchModal').classList.add('active');
+            renderBatchSelects();
+            renderWeekdayCheckboxes(); // 确保复选框显示最新
+        }
+
+        function closeBatchModal() {
+            document.getElementById('batchModal').classList.remove('active');
+        }
+
+        // 点击外部关闭批量模态框
+        document.getElementById('batchModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeBatchModal();
+            }
+        });
 
         // ============================================================
         //  清除
         // ============================================================
         function clearAll() {
-            if (isCompareMode) {
+            if (compareDataList.length > 0) {
                 showToast('请先退出比对模式再清除', 'info');
                 return;
             }
@@ -1263,7 +1557,6 @@
             const el = document.getElementById('toast');
             el.textContent = message;
             el.className = 'toast ' + type;
-            // 强制重绘
             void el.offsetWidth;
             el.classList.add('show');
             clearTimeout(toastTimer);
@@ -1280,18 +1573,19 @@
                 if (document.getElementById('modalOverlay').classList.contains('active')) {
                     closeModal();
                 }
-                if (isCompareMode) {
+                if (document.getElementById('batchModal').classList.contains('active')) {
+                    closeBatchModal();
+                }
+                if (compareDataList.length > 0) {
                     exitCompareMode();
                     render();
                     showToast('已退出比对模式', 'info');
                 }
             }
-            // Ctrl+E 导出
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
                 exportData();
             }
-            // Ctrl+I 导入
             if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
                 e.preventDefault();
                 document.getElementById('fileInput').click();
@@ -1304,22 +1598,27 @@
         loadFromStorage();
         render();
 
-        // 页面关闭前保存
         window.addEventListener('beforeunload', () => {
             saveToStorage();
         });
 
-        // 暴露全局函数（用于 HTML 内联调用）
+        // 暴露全局函数
         window.exportData = exportData;
         window.handleImport = handleImport;
         window.clearAll = clearAll;
         window.exitCompareMode = exitCompareMode;
+        window.clearCompareQueue = clearCompareQueue;
+        window.openBatchModal = openBatchModal;
+        window.closeBatchModal = closeBatchModal;
+        window.batchMarkTimeRange = batchMarkTimeRange;
+        window.batchMarkAll = batchMarkAll;
         window.closeModal = closeModal;
         window.modalConfirm = modalConfirm;
         window.showToast = showToast;
 
-        console.log('📅 空闲时间表已加载');
-        console.log('💡 快捷键: Ctrl+E 导出, Ctrl+I 导入, ESC 退出比对/关闭弹窗');
+        console.log('📅 空闲时间鱼 已加载');
+        console.log('💡 快捷键: Ctrl+E 导出, Ctrl+I 导入, ESC 关闭弹窗/退出比对');
+        console.log('🔘 点击“选择模式”打开批量操作弹窗，可指定星期');
     </script>
 
 </body>
