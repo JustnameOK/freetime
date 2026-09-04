@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空闲游鱼</title>
+    <style>
+        /* ===== CSS 变量 & 重置 ===== */
+        :root {
+            --primary: #4A6CF7;
+            --primary-light: #E8EDFD;
+            --primary-dark: #3458D6;
+            --green: #34D399;
+            --green-light: #D1FAE5;
+            --green-dark: #059669;
+            --purple: #8B5CF6;
+            --purple-light: #EDE9FE;
+            --purple-dark: #7C3AED;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --radius: 12px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --transition: 0.2s ease;
+            --cell-size: 38px;
+            --time-col-width: 64px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f0f2f5;
+            color: var(--gray-800);
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* ===== 容器 ===== */
+        .app-container {
+            max-width: 1100px;
+            width: 100%;
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 28px 32px 32px;
+            transition: all var(--transition);
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            gap: 12px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+            letter-spacing: -0.3px;
+        }
+
+        .header-left .badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            background: var(--gray-100);
+            color: var(--gray-700);
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .btn:hover {
+            background: var(--gray-200);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(74, 108, 247, 0.35);
+        }
+
+        .btn-green {
+            background: var(--green);
+            color: white;
+        }
+        .btn-green:hover {
+            background: var(--green-dark);
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.35);
+        }
+
+        .btn-purple {
+            background: var(--purple);
+            color: white;
+        }
+        .btn-purple:hover {
+            background: var(--purple-dark);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+        }
+
+        .btn-danger {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+        .btn-danger:hover {
+            background: #FECACA;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--gray-300);
+        }
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+
+        .btn-sm {
+            padding: 5px 14px;
+            font-size: 13px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* ===== 比对模式提示条 ===== */
+        .compare-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--purple-light);
+            border: 1.5px solid var(--purple);
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .compare-banner.active {
+            display: flex;
+        }
+
+        .compare-banner .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            color: var(--purple-dark);
+        }
+
+        .compare-banner .left .icon {
+            font-size: 20px;
+        }
+
+        .compare-banner .stats {
+            font-size: 14px;
+            color: var(--gray-600);
+            font-weight: 400;
+        }
+
+        .compare-banner .stats strong {
+            color: var(--purple-dark);
+        }
+
+        /* ===== 表格容器 ===== */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            background: white;
+            position: relative;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            min-width: 640px;
+        }
+
+        .schedule-table th,
+        .schedule-table td {
+            border: 1px solid var(--gray-200);
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* ===== 表头 ===== */
+        .schedule-table thead th {
+            background: var(--gray-50);
+            padding: 10px 4px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-700);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .schedule-table thead th:first-child {
+            min-width: var(--time-col-width);
+            width: var(--time-col-width);
+            background: var(--gray-100);
+            color: var(--gray-500);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .schedule-table thead th.weekday {
+            cursor: default;
+            transition: background var(--transition);
+        }
+
+        .schedule-table thead th.weekday:hover {
+            background: var(--gray-200);
+        }
+
+        .schedule-table thead th .day-label {
+            display: block;
+            font-size: 14px;
+        }
+        .schedule-table thead th .day-short {
+            display: none;
+            font-size: 12px;
+        }
+
+        /* ===== 表体 ===== */
+        .schedule-table tbody td {
+            padding: 0;
+            height: var(--cell-size);
+            min-height: var(--cell-size);
+            max-height: var(--cell-size);
+            background: white;
+            transition: background var(--transition), transform 0.1s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .schedule-table tbody td:first-child {
+            background: var(--gray-50);
+            color: var(--gray-500);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: default;
+            min-width: var(--time-col-width);
+            width: var(--time-col-width);
+            padding: 0 4px;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+        }
+
+        .schedule-table tbody td:first-child .time-half {
+            font-size: 10px;
+            color: var(--gray-400);
+        }
+
+        /* ===== 单元格状态 ===== */
+        .schedule-table tbody td.free {
+            background: var(--green-light);
+            border-color: #A7F3D0;
+        }
+
+        .schedule-table tbody td.free::after {
+            content: "✓";
+            color: var(--green-dark);
+            font-size: 14px;
+            font-weight: 700;
+            opacity: 0.6;
+        }
+
+        .schedule-table tbody td.busy {
+            background: white;
+        }
+
+        .schedule-table tbody td.busy::after {
+            content: "";
+        }
+
+        /* 悬停效果 */
+        .schedule-table tbody td:not(:first-child):hover {
+            filter: brightness(0.96);
+            transform: scale(1.02);
+            z-index: 2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        /* ===== 重叠状态 ===== */
+        .schedule-table tbody td.overlap {
+            background: var(--purple-light) !important;
+            border-color: var(--purple) !important;
+            position: relative;
+        }
+
+        .schedule-table tbody td.overlap::after {
+            content: "◆";
+            color: var(--purple);
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .schedule-table tbody td.overlap.free::after {
+            content: "◆";
+            color: var(--purple);
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        /* ===== 时间行交替 ===== */
+        .schedule-table tbody tr:nth-child(even) td:first-child {
+            background: var(--gray-50);
+        }
+
+        .schedule-table tbody tr:nth-child(odd) td:first-child {
+            background: #FAFBFC;
+        }
+
+        /* ===== 底部 ===== */
+        .footer {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 12px;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 18px;
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-item .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1px solid var(--gray-200);
+            flex-shrink: 0;
+        }
+
+        .legend-item .dot.free-dot {
+            background: var(--green-light);
+            border-color: #A7F3D0;
+        }
+
+        .legend-item .dot.busy-dot {
+            background: white;
+            border-color: var(--gray-200);
+        }
+
+        .legend-item .dot.overlap-dot {
+            background: var(--purple-light);
+            border-color: var(--purple);
+        }
+
+        .stats-info {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .stats-info strong {
+            color: var(--gray-700);
+        }
+
+        /* ===== 重叠列表 ===== */
+        .overlap-list-wrap {
+            margin-top: 16px;
+            padding: 16px 20px;
+            background: var(--gray-50);
+            border-radius: 10px;
+            border: 1px solid var(--gray-200);
+            display: none;
+        }
+
+        .overlap-list-wrap.active {
+            display: block;
+        }
+
+        .overlap-list-wrap .title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .overlap-list-wrap .title .count {
+            background: var(--purple);
+            color: white;
+            border-radius: 20px;
+            padding: 0 10px;
+            font-size: 12px;
+            line-height: 20px;
+        }
+
+        .overlap-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .overlap-list .tag {
+            background: white;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            border: 1px solid var(--gray-200);
+            color: var(--gray-700);
+            white-space: nowrap;
+        }
+
+        .overlap-list .tag .day-tag {
+            font-weight: 600;
+            color: var(--purple-dark);
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            padding: 32px 36px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.25s ease;
+        }
+
+        .modal-box h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--gray-900);
+        }
+
+        .modal-box p {
+            font-size: 15px;
+            color: var(--gray-600);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-box .actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .modal-box .actions .btn {
+            min-width: 80px;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* ===== Toast 通知 ===== */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            background: var(--gray-900);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: all 0.35s ease;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: var(--green-dark);
+        }
+        .toast.error {
+            background: #DC2626;
+        }
+        .toast.info {
+            background: var(--primary);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            .app-container {
+                padding: 16px 14px 20px;
+            }
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+            .header-left h1 {
+                font-size: 20px;
+            }
+            .header-actions {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .header-actions .btn {
+                font-size: 13px;
+                padding: 6px 14px;
+                flex: 1 0 auto;
+                justify-content: center;
+            }
+            .schedule-table thead th .day-label {
+                display: none;
+            }
+            .schedule-table thead th .day-short {
+                display: block;
+            }
+            .schedule-table thead th:first-child .day-short {
+                display: none;
+            }
+            .schedule-table tbody td:first-child {
+                font-size: 10px;
+                min-width: 44px;
+                width: 44px;
+                padding: 0 2px;
+            }
+            :root {
+                --cell-size: 32px;
+                --time-col-width: 44px;
+            }
+            .schedule-table tbody td.free::after,
+            .schedule-table tbody td.overlap::after {
+                font-size: 11px;
+            }
+            .legend {
+                gap: 10px;
+                font-size: 12px;
+            }
+            .footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .stats-info {
+                text-align: center;
+            }
+            .modal-box {
+                padding: 24px 20px;
+            }
+            .modal-box h3 {
+                font-size: 18px;
+            }
+            .compare-banner {
+                padding: 10px 16px;
+                font-size: 13px;
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+            .compare-banner .left {
+                justify-content: center;
+            }
+            .overlap-list-wrap {
+                padding: 12px 14px;
+            }
+            .overlap-list .tag {
+                font-size: 12px;
+                padding: 3px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --cell-size: 28px;
+                --time-col-width: 38px;
+            }
+            .schedule-table thead th {
+                font-size: 12px;
+                padding: 6px 2px;
+            }
+            .schedule-table tbody td:first-child {
+                font-size: 9px;
+                min-width: 38px;
+                width: 38px;
+            }
+            .schedule-table tbody td.free::after,
+            .schedule-table tbody td.overlap::after {
+                font-size: 9px;
+            }
+            .app-container {
+                padding: 10px 8px 14px;
+            }
+            .header-left h1 {
+                font-size: 17px;
+            }
+            .btn {
+                font-size: 12px;
+                padding: 5px 10px;
+            }
+        }
+
+        /* ===== 滚动条美化 ===== */
+        .table-wrap::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .table-wrap::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 4px;
+        }
+        .table-wrap::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 4px;
+        }
+        .table-wrap::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-400);
+        }
+
+        .overlap-list::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .overlap-list::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 主容器 ===== -->
+    <div class="app-container" id="app">
+
+        <!-- 头部 -->
+        <div class="header">
+            <div class="header-left">
+                <h1>📅 空闲时间鱼</h1>
+                <span class="badge">周一到周日</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑 清除</button>
+                <button class="btn btn-primary btn-sm" onclick="exportData()">📤 导出</button>
+                <button class="btn btn-green btn-sm" onclick="document.getElementById('fileInput').click()">📥 导入</button>
+                <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleImport(event)">
+            </div>
+        </div>
+
+        <!-- 比对模式提示条 -->
+        <div class="compare-banner" id="compareBanner">
+            <div class="left">
+                <span class="icon">🔍</span>
+                <span>比对模式已开启</span>
+                <span class="stats" id="compareStats">找到 <strong>0</strong> 个重叠时间段</span>
+            </div>
+            <div>
+                <button class="btn btn-purple btn-sm" onclick="exitCompareMode()">✕ 退出比对</button>
+            </div>
+        </div>
+
+        <!-- 表格 -->
+        <div class="table-wrap">
+            <table class="schedule-table" id="scheduleTable">
+                <thead>
+                    <tr id="tableHead">
+                        <!-- 由 JS 渲染 -->
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 由 JS 渲染 -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 底部 -->
+        <div class="footer">
+            <div class="legend">
+                <span class="legend-item">
+                    <span class="dot free-dot"></span> 空闲
+                </span>
+                <span class="legend-item">
+                    <span class="dot busy-dot"></span> 忙碌
+                </span>
+                <span class="legend-item">
+                    <span class="dot overlap-dot"></span> 重叠空闲
+                </span>
+                <span style="color:var(--gray-400);font-size:12px;">点击格子切换</span>
+            </div>
+            <div class="stats-info" id="statsInfo">
+                已标记 <strong id="freeCount">0</strong> 个空闲时段
+            </div>
+        </div>
+
+        <!-- 重叠列表 -->
+        <div class="overlap-list-wrap" id="overlapListWrap">
+            <div class="title">
+                📋 重叠空闲时间段
+                <span class="count" id="overlapCount">0</span>
+            </div>
+            <div class="overlap-list" id="overlapList"></div>
+        </div>
+    </div>
+
+    <!-- ===== 模态框 ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <h3 id="modalTitle">导入数据</h3>
+            <p id="modalDesc">是否与当前数据比对，找出重叠的空闲时间段？</p>
+            <div class="actions">
+                <button class="btn btn-outline" id="modalCancel" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" id="modalReplace" onclick="modalConfirm('replace')">直接替换</button>
+                <button class="btn btn-purple" id="modalCompare" onclick="modalConfirm('compare')">比对合并</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================================
+        //  常量 & 配置
+        // ============================================================
+        const DAYS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+        const DAYS_EN = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const HOURS_START = 6; // 06:00
+        const HOURS_END = 24; // 24:00
+        const SLOTS = (HOURS_END - HOURS_START) * 2; // 每30分钟一格 => 36
+
+        // 生成时间标签
+        const TIME_LABELS = [];
+        for (let i = 0; i < SLOTS; i++) {
+            const h = HOURS_START + Math.floor(i / 2);
+            const m = (i % 2) * 30;
+            const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            TIME_LABELS.push(label);
+        }
+
+        // ============================================================
+        //  状态
+        // ============================================================
+        let schedule = {}; // { monday: [bool, ...], ... }
+        let compareData = null; // 导入的原始数据（用于比对）
+        let overlapCells = new Set(); // 存储重叠的格子 key: "dayIdx-slotIdx"
+        let isCompareMode = false;
+
+        // 模态框回调
+        let modalResolve = null;
+
+        // ============================================================
+        //  初始化
+        // ============================================================
+        function initSchedule() {
+            const empty = () => new Array(SLOTS).fill(false);
+            const data = {};
+            DAYS_EN.forEach(d => { data[d] = empty(); });
+            return data;
+        }
+
+        // 从 localStorage 恢复或新建
+        function loadFromStorage() {
+            try {
+                const raw = localStorage.getItem('freeSchedule');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    // 验证结构
+                    let valid = true;
+                    DAYS_EN.forEach(d => {
+                        if (!Array.isArray(parsed[d]) || parsed[d].length !== SLOTS) valid = false;
+                    });
+                    if (valid) {
+                        schedule = parsed;
+                        return;
+                    }
+                }
+            } catch (_) { /* ignore */ }
+            schedule = initSchedule();
+            saveToStorage();
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem('freeSchedule', JSON.stringify(schedule));
+            } catch (_) { /* ignore */ }
+        }
+
+        // ============================================================
+        //  渲染
+        // ============================================================
+        function render() {
+            renderHead();
+            renderBody();
+            updateStats();
+            updateOverlapList();
+            updateCompareBanner();
+        }
+
+        function renderHead() {
+            const thead = document.getElementById('tableHead');
+            let html = '<th>时间</th>';
+            DAYS.forEach((d, idx) => {
+                const short = d.replace('周', '').replace('期', '');
+                html += `<th class="weekday" data-day="${idx}">
+                            <span class="day-label">${d}</span>
+                            <span class="day-short">${short}</span>
+                        </th>`;
+            });
+            thead.innerHTML = html;
+        }
+
+        function renderBody() {
+            const tbody = document.getElementById('tableBody');
+            let html = '';
+            for (let slot = 0; slot < SLOTS; slot++) {
+                const timeLabel = TIME_LABELS[slot];
+                const isHalf = slot % 2 === 1;
+                const displayLabel = isHalf ? '' : timeLabel;
+                const halfMark = isHalf ? `<span class="time-half">${timeLabel}</span>` : '';
+
+                html += `<tr>`;
+                html += `<td>${displayLabel}${halfMark}</td>`;
+
+                for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                    const dayKey = DAYS_EN[dayIdx];
+                    const isFree = schedule[dayKey]?.[slot] || false;
+                    const isOverlap = overlapCells.has(`${dayIdx}-${slot}`);
+                    let cls = isFree ? 'free' : 'busy';
+                    if (isOverlap && isCompareMode) cls += ' overlap';
+                    html += `<td class="${cls}" data-day="${dayIdx}" data-slot="${slot}"></td>`;
+                }
+
+                html += `</tr>`;
+            }
+            tbody.innerHTML = html;
+
+            // 事件绑定（委托）
+            tbody.querySelectorAll('td:not(:first-child)').forEach(td => {
+                td.addEventListener('click', onCellClick);
+            });
+        }
+
+        // ============================================================
+        //  交互
+        // ============================================================
+        function onCellClick(e) {
+            const td = e.currentTarget;
+            const dayIdx = parseInt(td.dataset.day);
+            const slot = parseInt(td.dataset.slot);
+            const dayKey = DAYS_EN[dayIdx];
+
+            // 如果在比对模式下，不允许修改（保持数据清晰）
+            if (isCompareMode) {
+                showToast('比对模式下不能修改数据，请先退出比对', 'info');
+                return;
+            }
+
+            // 切换状态
+            const current = schedule[dayKey][slot];
+            schedule[dayKey][slot] = !current;
+            saveToStorage();
+
+            // 更新 UI
+            const isFree = schedule[dayKey][slot];
+            td.className = isFree ? 'free' : 'busy';
+            // 移除可能的 overlap 类
+            td.classList.remove('overlap');
+
+            updateStats();
+        }
+
+        // ============================================================
+        //  统计
+        // ============================================================
+        function updateStats() {
+            let count = 0;
+            DAYS_EN.forEach(d => {
+                schedule[d].forEach(v => { if (v) count++; });
+            });
+            document.getElementById('freeCount').textContent = count;
+        }
+
+        // ============================================================
+        //  导出
+        // ============================================================
+        function exportData() {
+            const data = {
+                version: '1.0',
+                exportedAt: new Date().toISOString(),
+                schedule: schedule,
+                slots: SLOTS,
+                timeRange: { start: HOURS_START, end: HOURS_END }
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `空闲时间表_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('✅ 数据导出成功', 'success');
+        }
+
+        // ============================================================
+        //  导入
+        // ============================================================
+        let pendingImportData = null;
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // 验证
+                    if (!data.schedule || typeof data.schedule !== 'object') {
+                        throw new Error('无效的数据格式：缺少 schedule 字段');
+                    }
+                    let valid = true;
+                    DAYS_EN.forEach(d => {
+                        if (!Array.isArray(data.schedule[d]) || data.schedule[d].length !== SLOTS) {
+                            valid = false;
+                        }
+                    });
+                    if (!valid) {
+                        throw new Error(`数据格式无效：需要包含 ${DAYS_EN.join(', ')} 且每个长度为 ${SLOTS}`);
+                    }
+
+                    pendingImportData = data.schedule;
+                    // 显示模态框
+                    showModal(
+                        '📥 导入数据',
+                        '检测到有效的数据文件。请选择操作：',
+                        '直接替换',
+                        '比对合并'
+                    );
+                } catch (err) {
+                    showToast('❌ 导入失败: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            // 重置 input，允许重复选择同一文件
+            event.target.value = '';
+        }
+
+        // ============================================================
+        //  模态框
+        // ============================================================
+        function showModal(title, desc, replaceLabel, compareLabel) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDesc').textContent = desc;
+            document.getElementById('modalReplace').textContent = replaceLabel || '直接替换';
+            document.getElementById('modalCompare').textContent = compareLabel || '比对合并';
+            document.getElementById('modalOverlay').classList.add('active');
+            return new Promise((resolve) => {
+                modalResolve = resolve;
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            if (modalResolve) {
+                modalResolve(null);
+                modalResolve = null;
+            }
+            pendingImportData = null;
+        }
+
+        function modalConfirm(action) {
+            document.getElementById('modalOverlay').classList.remove('active');
+            if (!pendingImportData) {
+                showToast('没有待导入的数据', 'error');
+                return;
+            }
+            if (action === 'replace') {
+                // 直接替换
+                schedule = JSON.parse(JSON.stringify(pendingImportData));
+                exitCompareMode();
+                saveToStorage();
+                render();
+                showToast('✅ 数据已替换', 'success');
+            } else if (action === 'compare') {
+                // 比对合并
+                performCompare(pendingImportData);
+            }
+            pendingImportData = null;
+            if (modalResolve) {
+                modalResolve(action);
+                modalResolve = null;
+            }
+        }
+
+        // 点击模态框外部关闭（点击背景）
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeModal();
+            }
+        });
+
+        // ============================================================
+        //  比对逻辑
+        // ============================================================
+        function performCompare(importedData) {
+            // 清空旧的重叠数据
+            overlapCells.clear();
+
+            // 遍历所有格子
+            for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                const dayKey = DAYS_EN[dayIdx];
+                const current = schedule[dayKey];
+                const imported = importedData[dayKey];
+                for (let slot = 0; slot < SLOTS; slot++) {
+                    if (current[slot] && imported[slot]) {
+                        overlapCells.add(`${dayIdx}-${slot}`);
+                    }
+                }
+            }
+
+            if (overlapCells.size === 0) {
+                showToast('💡 两份数据没有重叠的空闲时间段', 'info');
+                // 仍然进入比对模式，但显示空列表
+            } else {
+                showToast(`🔍 找到 ${overlapCells.size} 个重叠时间段`, 'success');
+            }
+
+            // 进入比对模式
+            isCompareMode = true;
+            compareData = importedData;
+            render();
+            // 高亮重叠
+            highlightOverlaps();
+            updateOverlapList();
+            updateCompareBanner();
+        }
+
+        function highlightOverlaps() {
+            // 在已有渲染基础上，给重叠格子添加类
+            const tbody = document.getElementById('tableBody');
+            tbody.querySelectorAll('td:not(:first-child)').forEach(td => {
+                const dayIdx = parseInt(td.dataset.day);
+                const slot = parseInt(td.dataset.slot);
+                if (overlapCells.has(`${dayIdx}-${slot}`)) {
+                    td.classList.add('overlap');
+                } else {
+                    td.classList.remove('overlap');
+                }
+            });
+        }
+
+        function exitCompareMode() {
+            isCompareMode = false;
+            compareData = null;
+            overlapCells.clear();
+            document.getElementById('compareBanner').classList.remove('active');
+            document.getElementById('overlapListWrap').classList.remove('active');
+            // 移除所有 overlap 类
+            document.querySelectorAll('#tableBody td.overlap').forEach(td => {
+                td.classList.remove('overlap');
+            });
+            // 更新统计
+            updateStats();
+        }
+
+        function updateCompareBanner() {
+            const banner = document.getElementById('compareBanner');
+            if (isCompareMode) {
+                banner.classList.add('active');
+                document.getElementById('compareStats').innerHTML =
+                    `找到 <strong>${overlapCells.size}</strong> 个重叠时间段`;
+            } else {
+                banner.classList.remove('active');
+            }
+        }
+
+        function updateOverlapList() {
+            const wrap = document.getElementById('overlapListWrap');
+            const list = document.getElementById('overlapList');
+            const countEl = document.getElementById('overlapCount');
+
+            if (!isCompareMode || overlapCells.size === 0) {
+                wrap.classList.remove('active');
+                return;
+            }
+
+            wrap.classList.add('active');
+            countEl.textContent = overlapCells.size;
+
+            // 构建时间段列表
+            const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            // 按天分组
+            const groups = {};
+            overlapCells.forEach(key => {
+                const [dayIdx, slot] = key.split('-').map(Number);
+                const day = dayNames[dayIdx];
+                if (!groups[day]) groups[day] = [];
+                groups[day].push(slot);
+            });
+
+            // 对每天的时间段进行合并（连续的格子合并为一个时间段）
+            let html = '';
+            for (const [day, slots] of Object.entries(groups)) {
+                slots.sort((a, b) => a - b);
+                const ranges = [];
+                let start = slots[0];
+                let end = slots[0];
+                for (let i = 1; i < slots.length; i++) {
+                    if (slots[i] === end + 1) {
+                        end = slots[i];
+                    } else {
+                        ranges.push({ start, end });
+                        start = slots[i];
+                        end = slots[i];
+                    }
+                }
+                ranges.push({ start, end });
+
+                ranges.forEach(r => {
+                    const startLabel = TIME_LABELS[r.start];
+                    const endLabel = TIME_LABELS[r.end + 1] || '24:00';
+                    html += `<span class="tag"><span class="day-tag">${day}</span> ${startLabel} – ${endLabel}</span>`;
+                });
+            }
+
+            list.innerHTML = html || '<span style="color:var(--gray-400);font-size:13px;">无重叠时间段</span>';
+        }
+
+        // ============================================================
+        //  清除
+        // ============================================================
+        function clearAll() {
+            if (isCompareMode) {
+                showToast('请先退出比对模式再清除', 'info');
+                return;
+            }
+            if (!confirm('确定要清除所有空闲标记吗？')) return;
+            schedule = initSchedule();
+            saveToStorage();
+            render();
+            showToast('已清除所有标记', 'info');
+        }
+
+        // ============================================================
+        //  Toast 通知
+        // ============================================================
+        let toastTimer = null;
+
+        function showToast(message, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = message;
+            el.className = 'toast ' + type;
+            // 强制重绘
+            void el.offsetWidth;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.classList.remove('show');
+            }, 2800);
+        }
+
+        // ============================================================
+        //  键盘快捷键
+        // ============================================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (document.getElementById('modalOverlay').classList.contains('active')) {
+                    closeModal();
+                }
+                if (isCompareMode) {
+                    exitCompareMode();
+                    render();
+                    showToast('已退出比对模式', 'info');
+                }
+            }
+            // Ctrl+E 导出
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportData();
+            }
+            // Ctrl+I 导入
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                document.getElementById('fileInput').click();
+            }
+        });
+
+        // ============================================================
+        //  启动
+        // ============================================================
+        loadFromStorage();
+        render();
+
+        // 页面关闭前保存
+        window.addEventListener('beforeunload', () => {
+            saveToStorage();
+        });
+
+        // 暴露全局函数（用于 HTML 内联调用）
+        window.exportData = exportData;
+        window.handleImport = handleImport;
+        window.clearAll = clearAll;
+        window.exitCompareMode = exitCompareMode;
+        window.closeModal = closeModal;
+        window.modalConfirm = modalConfirm;
+        window.showToast = showToast;
+
+        console.log('📅 空闲时间表已加载');
+        console.log('💡 快捷键: Ctrl+E 导出, Ctrl+I 导入, ESC 退出比对/关闭弹窗');
+    </script>
+
+</body>
+</html>
