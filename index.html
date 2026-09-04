@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>记录游鱼</title>
+    <title>空闲游鱼</title>
     <style>
         /* ===== CSS 变量 & 重置 ===== */
         :root {
@@ -478,6 +478,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .overlap-list-wrap .title .count {
@@ -487,6 +488,10 @@
             padding: 0 10px;
             font-size: 12px;
             line-height: 20px;
+        }
+
+        .overlap-list-wrap .title .btn {
+            margin-left: auto;
         }
 
         .overlap-list {
@@ -836,6 +841,11 @@
             .weekday-checkboxes label {
                 font-size: 13px;
             }
+            .overlap-list-wrap .title .btn {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         @media (max-width: 480px) {
@@ -977,8 +987,9 @@
         <!-- 重叠列表 -->
         <div class="overlap-list-wrap" id="overlapListWrap">
             <div class="title">
-                📋 共同空闲时间段（所有数据交集）
+                <span>📋 共同空闲时间段（所有数据交集）</span>
                 <span class="count" id="overlapCount">0</span>
+                <button class="btn btn-primary btn-sm" onclick="buildScheduleImage()" style="margin-left:auto;">📷 导出图片</button>
             </div>
             <div class="overlap-list" id="overlapList"></div>
         </div>
@@ -1303,7 +1314,6 @@
             const dateStr = now.toISOString().slice(0,10);
             document.getElementById('exportFileName').value = `空闲时间表_${dateStr}`;
             document.getElementById('exportModal').classList.add('active');
-            // 切换导出类型事件
             const typeSelect = document.getElementById('exportType');
             typeSelect.onchange = function() {
                 const isCode = this.value === 'code';
@@ -1314,7 +1324,6 @@
                     generateExportCode();
                 }
             };
-            // 默认文件
             typeSelect.value = 'file';
             typeSelect.onchange();
             setTimeout(() => document.getElementById('exportFileName').focus(), 100);
@@ -1327,7 +1336,7 @@
         function generateExportCode() {
             try {
                 const json = JSON.stringify(schedule);
-                exportCode = btoa(unescape(encodeURIComponent(json))); // 支持中文
+                exportCode = btoa(unescape(encodeURIComponent(json)));
                 document.getElementById('exportCodeDisplay').textContent = exportCode;
             } catch (e) {
                 document.getElementById('exportCodeDisplay').textContent = '生成口令失败：' + e.message;
@@ -1343,7 +1352,6 @@
             navigator.clipboard.writeText(text).then(() => {
                 showToast('✅ 口令已复制到剪贴板', 'success');
             }).catch(() => {
-                // fallback
                 const ta = document.createElement('textarea');
                 ta.value = text;
                 document.body.appendChild(ta);
@@ -1366,9 +1374,8 @@
                 if (!filename.endsWith('.json')) filename += '.json';
                 doExportFile(filename);
                 closeExportModal();
-            } else { // code
+            } else {
                 if (!exportCode) generateExportCode();
-                // 直接复制口令并关闭
                 copyExportCode();
                 closeExportModal();
             }
@@ -1395,7 +1402,6 @@
             showToast(`✅ 数据已导出为 “${filename}”`, 'success');
         }
 
-        // 点击外部关闭导出模态框
         document.getElementById('exportModal').addEventListener('click', (e) => {
             if (e.target === e.currentTarget) closeExportModal();
         });
@@ -1427,7 +1433,6 @@
                 showToast('❌ 口令无效，请检查是否正确', 'error');
                 return;
             }
-            // 验证结构
             let valid = true;
             DAYS_EN.forEach(d => {
                 if (!Array.isArray(parsed[d]) || parsed[d].length !== SLOTS) valid = false;
@@ -1436,7 +1441,6 @@
                 showToast('❌ 口令数据格式无效', 'error');
                 return;
             }
-            // 关闭口令模态框，弹出导入选择（替换/比对）
             closeImportCodeModal();
             pendingImportData = parsed;
             showModalForImport();
@@ -1638,6 +1642,117 @@
         }
 
         // ============================================================
+        //  导出图片（课程表样式）
+        // ============================================================
+        function buildScheduleImage() {
+            if (compareDataList.length === 0) {
+                showToast('没有比对数据，无法生成图片', 'info');
+                return;
+            }
+            // 检测 html2canvas 是否已加载
+            if (typeof html2canvas === 'undefined') {
+                showToast('正在加载绘图库，请稍候...', 'info');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script.onload = function() {
+                    doBuildScheduleImage();
+                };
+                script.onerror = function() {
+                    showToast('❌ 加载绘图库失败，请检查网络', 'error');
+                };
+                document.head.appendChild(script);
+            } else {
+                doBuildScheduleImage();
+            }
+        }
+
+        function doBuildScheduleImage() {
+            // 创建临时容器
+            const container = document.createElement('div');
+            container.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:white;padding:20px;font-family:sans-serif;';
+            document.body.appendChild(container);
+
+            // 标题
+            const title = document.createElement('h2');
+            title.textContent = '共同空闲时间表';
+            title.style.cssText = 'text-align:center;font-size:20px;margin-bottom:16px;color:#1F2937;';
+            container.appendChild(title);
+
+            // 表格
+            const table = document.createElement('table');
+            table.style.cssText = 'width:100%;border-collapse:collapse;border:1px solid #D1D5DB;';
+
+            // 表头
+            const thead = document.createElement('thead');
+            const headRow = document.createElement('tr');
+            const thTime = document.createElement('th');
+            thTime.textContent = '时间';
+            thTime.style.cssText = 'border:1px solid #D1D5DB;padding:8px;background:#F3F4F6;font-weight:600;font-size:14px;';
+            headRow.appendChild(thTime);
+            DAYS.forEach(day => {
+                const th = document.createElement('th');
+                th.textContent = day;
+                th.style.cssText = 'border:1px solid #D1D5DB;padding:8px;background:#F3F4F6;font-weight:600;font-size:14px;';
+                headRow.appendChild(th);
+            });
+            thead.appendChild(headRow);
+            table.appendChild(thead);
+
+            // 表体
+            const tbody = document.createElement('tbody');
+            for (let slot = 0; slot < SLOTS; slot++) {
+                const tr = document.createElement('tr');
+                const tdTime = document.createElement('td');
+                tdTime.textContent = TIME_LABELS[slot];
+                tdTime.style.cssText = 'border:1px solid #D1D5DB;padding:4px;text-align:center;font-size:12px;background:#F9FAFB;';
+                tr.appendChild(tdTime);
+                for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
+                    const td = document.createElement('td');
+                    const isOverlap = isOverlapCell(dayIdx, slot);
+                    td.textContent = isOverlap ? '✓' : '';
+                    td.style.cssText = `border:1px solid #D1D5DB;padding:4px;text-align:center;font-size:14px;background:${isOverlap ? '#D1FAE5' : '#F9FAFB'};`;
+                    if (isOverlap) {
+                        td.style.fontWeight = 'bold';
+                        td.style.color = '#059669';
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+            table.appendChild(tbody);
+            container.appendChild(table);
+
+            // 图例
+            const legend = document.createElement('div');
+            legend.style.cssText = 'margin-top:12px;display:flex;gap:20px;justify-content:center;font-size:13px;color:#4B5563;';
+            const item1 = document.createElement('span');
+            item1.innerHTML = '<span style="display:inline-block;width:16px;height:16px;background:#D1FAE5;border:1px solid #A7F3D0;vertical-align:middle;margin-right:4px;"></span> 共同空闲';
+            const item2 = document.createElement('span');
+            item2.innerHTML = '<span style="display:inline-block;width:16px;height:16px;background:#F9FAFB;border:1px solid #D1D5DB;vertical-align:middle;margin-right:4px;"></span> 其他';
+            legend.appendChild(item1);
+            legend.appendChild(item2);
+            container.appendChild(legend);
+
+            // 截图
+            html2canvas(container, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `共同空闲时间表_${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                document.body.removeChild(container);
+                showToast('✅ 图片导出成功', 'success');
+            }).catch(err => {
+                document.body.removeChild(container);
+                showToast('❌ 导出图片失败: ' + err.message, 'error');
+            });
+        }
+
+        // ============================================================
         //  批量操作：时间范围标记
         // ============================================================
         function getSlotFromTime(hour, minute) {
@@ -1821,10 +1936,11 @@
         window.closeModal = closeModal;
         window.modalConfirm = modalConfirm;
         window.showToast = showToast;
+        window.buildScheduleImage = buildScheduleImage;
 
         console.log('📅 空闲时间鱼 已加载');
         console.log('💡 快捷键: Ctrl+E 导出(支持口令), Ctrl+I 导入文件, ESC 关闭弹窗/退出比对');
-        console.log('🔑 支持导出/导入口令（Base64编码）');
+        console.log('📷 点击“导出图片”可将共同空闲时间表导出为课程表样式图片');
     </script>
 
 </body>
